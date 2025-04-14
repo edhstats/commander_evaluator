@@ -58,7 +58,7 @@
     </style>
   </head>
   <body>
-    <h2>Valutazione Commander EDH + Strategia</h2>
+    <h2>Commander Evaluator Tool v1.0</h2>
 
     <label for="commanderName">Nome del Commander:</label>
     <input
@@ -316,7 +316,21 @@
           etichettaStrategia = "🔴 Strategia non sinergica";
         }
 
-        feedbackStrategia += `\n${etichettaStrategia}`;
+        let motivazioneStrategia = "";
+
+        if (punteggioStrategia >= 4) {
+          motivazioneStrategia = "La combinazione di colori, CMC e caratteristiche del commander è altamente sinergica con la strategia scelta.";
+        } else if (punteggioStrategia >= 2) {
+          motivazioneStrategia = "Ci sono buoni elementi in linea con la strategia, anche se manca qualche dettaglio per massimizzarne l'efficacia.";
+        } else if (punteggioStrategia >= 1) {
+          motivazioneStrategia = "Il commander mostra qualche affinità con la strategia, ma ci sono limiti che ne compromettono l'efficienza.";
+        } else {
+          motivazioneStrategia = "Colori e CMC del commander non sono in sintonia con la strategia dichiarata.";
+        }
+
+
+        feedbackStrategia += `\nValutazione strategica: ${etichettaStrategia}\nMotivazione: ${motivazioneStrategia}`;
+
 
         output.innerHTML =
           `Il tuo Commander EDH:<br>` +
@@ -333,4 +347,3 @@
     </script>
   </body>
 </html>
-
