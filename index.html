@@ -181,12 +181,29 @@
           const secondaryData = await getSecondaryCommanders();
           trovato = secondaryData.find((c) => c.name.toLowerCase() === nome);
 
-          if (!trovato) {
-            output.textContent = "Commander non trovato nei dati disponibili.";
-            return;
-          }
+          if (trovato) {
+                      const valutazione = "Commander non ancora giocato!";
+                      const badge = "<span class='badge badge-low'>Non presente!</span>";
+                      const colori = trovato.color_identity.join(", ");
+                      const cmc = trovato.cmc;
+
+                      output.innerHTML =
+                        `Il tuo Commander EDH:<br>` +
+                        `Nome: ${trovato.name} ${badge}<br>` +
+                        `Colori: ${colori}<br>` +
+                        `Strategia dichiarata: ${strategia}<br>` +
+                        `CMC: ${cmc}<br>` +
+                        `Partite Giocate: 0<br>` +
+                        `Vittorie: 0<br>` +
+                        `Win Rate stimato: N/A<br><br>` +
+                        `<strong>Valutazione meta:</strong> ${valutazione}<br>` +
+                        `<strong>Valutazione strategia:</strong> non applicabile (nessun dato disponibile).`;
+                      return;
+                    }
+
         }
 
+        // Logica classica per commander trovato nel data principale
         const winRate = (trovato.vittorie / trovato.partite) * 100;
         let colori = trovato.color_identity.flatMap((c) => c.split(""));
         const cmc = trovato.cmc;
@@ -218,6 +235,8 @@
           valutazione = "Commander con win rate molto basso.";
           badge = "<span class='badge badge-low'>Meta basso</span>";
         }
+
+        
 
 
         // Strategia
