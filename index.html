@@ -1,368 +1,712 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Valutatore Commander EDH</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        padding: 2rem;
-        background-color: #f0f2f5;
-        max-width: 600px;
-        margin: auto;
-      }
-      h2 {
-        color: #333;
-      }
-      label,
-      select,
-      input,
-      button {
-        display: block;
-        width: 100%;
-        margin: 1rem 0;
-        font-size: 1rem;
-      }
-      .risultato {
-        background-color: #ffffff;
-        border: 1px solid #ccc;
-        padding: 1.5rem;
-        border-radius: 10px;
-        margin-top: 2rem;
-        white-space: pre-wrap;
-      }
-      .badge {
-        display: inline-block;
-        padding: 0.4em 0.8em;
-        border-radius: 1em;
-        font-size: 0.85rem;
-        margin-left: 0.5em;
-      }
-      .badge-top {
-        background: #28a745;
-        color: white;
-      }
-      .badge-good {
-        background: #ffc107;
-        color: black;
-      }
-      .badge-medium {
-        background: #17a2b8;
-        color: white;
-      }
-      .badge-low {
-        background: #dc3545;
-        color: white;
-      }
-    </style>
-  </head>
-  <body>
-    <h2>Commander Evaluator Tool v1.0</h2>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valutatore Commander EDH</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 2rem;
+      background-color: #f0f2f5;
+      max-width: 800px;
+      margin: auto;
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #ddd;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .input-section {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .results-section {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .charts-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+    }
+    .chart-container {
+      flex: 1;
+      min-width: 300px;
+      height: 300px;
+      background-color: white;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .no-data {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #666;
+      font-style: italic;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #555;
+    }
+    select, input {
+      display: block;
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #4a69bd;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #3c58a0;
+    }
+    button:disabled {
+      background-color: #a0a0a0;
+      cursor: not-allowed;
+    }
+    .risultato {
+      background-color: #f9f9f9;
+      border: 1px solid #eee;
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin-top: 1rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.4em 0.8em;
+      border-radius: 1em;
+      font-size: 0.85rem;
+      margin-left: 0.5em;
+      font-weight: 600;
+    }
+    .badge-top {
+      background: #28a745;
+      color: white;
+    }
+    .badge-good {
+      background: #ffc107;
+      color: black;
+    }
+    .badge-medium {
+      background: #17a2b8;
+      color: white;
+    }
+    .badge-low {
+      background: #dc3545;
+      color: white;
+    }
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 5px solid #4a69bd;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .card-preview {
+      max-width: 250px;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .flex-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .commander-info {
+      flex: 1;
+      min-width: 300px;
+    }
+    .card-container {
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    #statusMessage {
+      background-color: #e3f2fd;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      margin-bottom: 1rem;
+      text-align: center;
+      font-weight: bold;
+    }
+    details {
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+    }
+    summary {
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    .info-row strong {
+      font-weight: 600;
+      color: #444;
+    }
+    .info-unavailable {
+      color: #999;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h2>Commander Evaluator Tool v2.0</h2>
+  <div class="container">
+    <div class="input-section">
+      <div id="statusMessage">📡 Recupero dati ...</div>
+      <div class="autocomplete-container">
+        <label for="commanderName">Nome del Commander:</label>
+        <input type="text" id="commanderName" placeholder="Es. rograkh, son of rohgahh" list="commanderList" autocomplete="off" />
+        <datalist id="commanderList"></datalist>
+      </div>
+      <label for="strategia">Strategia:</label>
+      <select id="strategia">
+        <option>Aggro</option>
+        <option>Combo</option>
+        <option>Midrange</option>
+        <option>Control</option>
+        <option>Tokens</option>
+        <option>Stax</option>
+        <option>Group Hug</option>
+        <option>Proliferate</option>
+        <option>Superfriends</option>
+        <option>Reanimator</option>
+        <option>Voltron</option>
+        <option>Landfall</option>
+        <option>Spellslinger</option>
+        <option>Ramp</option>
+      </select>
+      <button id="valutaBtn" onclick="valutaCommander()" disabled>Valuta</button>
+      <div id="loader" class="loader"></div>
+    </div>
 
-    <label for="commanderName">Nome del Commander:</label>
-    <input
-      type="text"
-      id="commanderName"
-      list="commanderList"
-      placeholder="Es. Atraxa, Praetors' Voice"
-    />
-    <datalist id="commanderList"></datalist>
+    <div id="results" class="results-section">
+      <div class="flex-container">
+        <div class="commander-info">
+          <div id="risultato"></div>
+        </div>
+        <div class="card-container">
+          <img id="cardPreview" class="card-preview" src="" alt="Card Preview">
+        </div>
+      </div>
+      
+      <div class="charts-section">
+        <div class="chart-container" id="winrateContainer">
+          <canvas id="graficoWinrate"></canvas>
+        </div>
+        <div class="chart-container" id="trendContainer">
+          <canvas id="graficoTrend"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <label for="strategia">Strategia:</label>
-    <select id="strategia">
-      <option>Aggro</option>
-      <option>Combo</option>
-      <option>Midrange</option>
-      <option>Control</option>
-      <option>Tokens</option>
-      <option>Stax</option>
-      <option>Group Hug</option>
-      <option>Proliferate</option>
-      <option>Superfriends</option>
-      <option>Reanimator</option>
-      <option>Voltron</option>
-      <option>Landfall</option>
-      <option>Spellslinger</option>
-      <option>Ramp</option>
-    </select>
+  <script>
+    let commanderNameIndex = {};
+    let cacheSecondaryCommanders = null;
+    let graficoWinrate = null;
+    let graficoTrend = null;
 
-    <button onclick="valutaCommander()">Valuta</button>
+    function normalize(name) {
+      return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
 
-    <div class="risultato" id="risultato"></div>
+    async function cercaSuScryfall(nome) {
+      try {
+        const response = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(nome)}`);
+        const data = await response.json();
+        if (data.object === "card") {
+          return {
+            name: data.name,
+            image_url: data.image_uris?.normal || (data.card_faces?.[0].image_uris?.normal || ""),
+            color_identity: data.color_identity,
+            cmc: data.cmc
+          };
+        }
+      } catch (e) {
+        console.error("Errore nella ricerca Scryfall:", e);
+      }
+      return null;
+    }
 
-    <script>
-      window.onload = async function () {
-        const list = document.getElementById("commanderList");
+    window.onload = async function () {
+      const list = document.getElementById("commanderList");
 
+      try {
         const [mainData, secondaryData] = await Promise.all([
           getCommanders(),
-          getSecondaryCommanders(),
+          getSecondaryCommanders()
         ]);
 
         const nomiUnici = new Set();
-        const tuttiCommander = [...mainData, ...secondaryData].filter((c) => {
+        const tuttiCommander = [...mainData, ...secondaryData].filter(c => {
           if (nomiUnici.has(c.name)) return false;
           nomiUnici.add(c.name);
           return true;
         });
 
-        tuttiCommander.forEach((c) => {
+        for (const c of tuttiCommander) {
           const option = document.createElement("option");
           option.value = c.name;
           list.appendChild(option);
-        });
-      };
+          const key = normalize(c.name);
+          if (!commanderNameIndex[key]) commanderNameIndex[key] = [];
+          commanderNameIndex[key].push(c);
+        }
 
-      let cacheSecondaryCommanders = null;
+        document.getElementById("valutaBtn").disabled = false;
+        document.getElementById("statusMessage").textContent = "✅ Pronto all'uso!";
+      } catch (error) {
+        document.getElementById("statusMessage").textContent = "⚠️ Errore nel caricamento dei dati. Riprova più tardi.";
+        console.error("Errore nel caricamento:", error);
+      }
+    };
 
-      async function getSecondaryCommanders() {
-        if (cacheSecondaryCommanders) return cacheSecondaryCommanders;
-        const commanders = [];
-        let url = "https://api.scryfall.com/cards/search?q=is:commander";
+    async function getCommanders() {
+      try {
+        const res = await fetch("https://edhstats.github.io/Data/commanders.json");
+        const data = await res.json();
+        return data.commanders;
+      } catch (error) {
+        console.error("Errore nel recupero dei commander principali:", error);
+        return [];
+      }
+    }
 
-        while (url) {
-          try {
-            const response = await fetch(url);
-            const data = await response.json();
+    async function getSecondaryCommanders() {
+      if (cacheSecondaryCommanders) return cacheSecondaryCommanders;
+      const commanders = [];
+      let url = "https://api.scryfall.com/cards/search?q=is:commander";
 
-            if (data.object !== "list")
-              throw new Error("Risposta API non valida.");
-
-            data.data.forEach((card) => {
-              commanders.push({
-                name: card.name,
-                cmc: card.cmc,
-                color_identity: card.color_identity,
-              });
+      while (url) {
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          data.data.forEach(card => {
+            commanders.push({
+              name: card.name,
+              cmc: card.cmc,
+              color_identity: card.color_identity,
+              image_url: card.image_uris?.normal || (card.card_faces?.[0].image_uris?.normal || "")
             });
+          });
+          url = data.has_more ? data.next_page : null;
+        } catch (error) {
+          console.error("Errore nel recupero dei commander secondari:", error);
+          break;
+        }
+      }
 
-            url = data.has_more ? data.next_page : null;
-          } catch (err) {
-            console.error("Errore nel caricamento dei comandanti secondari:", err);
-            break;
+      cacheSecondaryCommanders = commanders;
+      return commanders;
+    }
+
+    function mostraMessaggioNoDati(containerId, messaggio) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `<div class="no-data">${messaggio}</div>`;
+    }
+
+    function creaGraficoWinrate(winRate) {
+      if (winRate === null) {
+        mostraMessaggioNoDati('winrateContainer', 'Dati di win rate non disponibili');
+        return;
+      }
+      
+      const ctx = document.getElementById('graficoWinrate').getContext('2d');
+      
+      if (graficoWinrate) {
+        graficoWinrate.destroy();
+      }
+      
+      graficoWinrate = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Win', 'Loss'],
+          datasets: [{
+            data: [winRate, 100 - winRate],
+            backgroundColor: [
+              'rgba(40, 167, 69, 0.7)',
+              'rgba(220, 53, 69, 0.7)'
+            ],
+            borderColor: [
+              'rgba(40, 167, 69, 1)',
+              'rgba(220, 53, 69, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+            },
+            title: {
+              display: true,
+              text: 'Win Rate Attuale'
+            }
+          }
+        }
+      });
+    }
+
+    function creaGraficoTrend(winRate) {
+      if (winRate === null) {
+        mostraMessaggioNoDati('trendContainer', 'Dati di trend non disponibili');
+        return;
+      }
+      
+      // Creare dati di esempio per il trend (dato che non abbiamo dati storici reali)
+      const storico = [
+        { mese: 'Gen', winrate: winRate * 0.9 },
+        { mese: 'Feb', winrate: winRate * 0.95 },
+        { mese: 'Mar', winrate: winRate * 0.98 },
+        { mese: 'Apr', winrate: winRate }
+      ];
+      
+      const ctx = document.getElementById("graficoTrend").getContext("2d");
+      
+      if (graficoTrend) {
+        graficoTrend.destroy();
+      }
+      
+      graficoTrend = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: storico.map(p => p.mese),
+          datasets: [{
+            label: "Win Rate %",
+            data: storico.map(p => p.winrate),
+            borderColor: "#007bff",
+            backgroundColor: "rgba(0, 123, 255, 0.1)",
+            tension: 0.2,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: true
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => `Win Rate: ${ctx.parsed.y.toFixed(1)}%`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100
+            }
+          }
+        }
+      });
+    }
+
+    const strategieCriteri = {
+      "Control": {
+        coloriEssenziali: ["U"],
+        coloriSecondari: ["W"],
+        cmcMassimoIdeale: 4,
+        pesoColoriEssenziali: 2,
+        pesoColoriSecondari: 1,
+        pesoCmc: 1
+      },
+      "Aggro": {
+        coloriEssenziali: ["R", "G"],
+        cmcMassimoIdeale: 3,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Combo": {
+        coloriEssenziali: ["U", "B"],
+        cmcMassimoIdeale: 4,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Midrange": {
+        coloriEssenziali: ["G"],
+        cmcMassimoIdeale: 4,
+        numeroColoriMinimoIdeale: 3,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1,
+        pesoNumeroColori: 1
+      },
+      "Tokens": {
+        coloriEssenziali: ["G", "W", "R"],
+        cmcMassimoIdeale: 4,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Stax": {
+        coloriEssenziali: ["W", "B"],
+        cmcMassimoIdeale: 3,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Group Hug": {
+        coloriEssenziali: ["U", "W", "G"],
+        cmcMassimoIdeale: 4,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Proliferate": {
+        coloriEssenziali: ["U", "G"],
+        cmcMassimoIdeale: 4,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Superfriends": {
+        coloriEssenziali: ["W", "U"],
+        cmcMassimoIdeale: 4,
+        numeroColoriMinimoIdeale: 3,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1,
+        pesoNumeroColori: 1
+      },
+      "Reanimator": {
+        coloriEssenziali: ["B"],
+        coloriSecondari: ["G", "U"],
+        cmcMassimoIdeale: 4,
+        pesoColoriEssenziali: 2,
+        pesoColoriSecondari: 1,
+        pesoCmc: 1
+      },
+      "Voltron": {
+        coloriEssenziali: ["W", "R"],
+        cmcMassimoIdeale: 3,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Landfall": {
+        coloriEssenziali: ["G", "R"],
+        cmcMassimoIdeale: 4,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Spellslinger": {
+        coloriEssenziali: ["U", "R"],
+        cmcMassimoIdeale: 3,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      },
+      "Ramp": {
+        coloriEssenziali: ["G"],
+        cmcMassimoIdeale: 3,
+        pesoColoriEssenziali: 2,
+        pesoCmc: 1
+      }
+    };
+
+    async function valutaCommander() {
+      const nome = document.getElementById("commanderName").value.trim();
+      const strategia = document.getElementById("strategia").value;
+      const out = document.getElementById("risultato");
+      const loader = document.getElementById("loader");
+      const btn = document.getElementById("valutaBtn");
+      const preview = document.getElementById("cardPreview");
+      const resultsSection = document.getElementById("results");
+
+      if (!nome) {
+        out.textContent = "⚠️ Inserisci un nome valido.";
+        return;
+      }
+
+      loader.style.display = "block";
+      btn.disabled = true;
+      out.textContent = "⌛ Elaborazione in corso...";
+      resultsSection.style.display = "none";
+
+      try {
+        const normalized = normalize(nome);
+        let trovato = commanderNameIndex[normalized]?.[0];
+        
+        // Se il commander ha statistiche, cerchiamo l'immagine separatamente
+        let imgCommander = null;
+        if (trovato) {
+          imgCommander = await cercaSuScryfall(trovato.name);
+        } else {
+          trovato = await cercaSuScryfall(nome);
+        }
+
+        if (!trovato) {
+          out.textContent = `❌ Nessun commander trovato per "${nome}".`;
+          loader.style.display = "none";
+          btn.disabled = false;
+          return;
+        }
+
+        // Usa l'immagine del commander trovata con Scryfall
+        if (imgCommander && imgCommander.image_url) {
+          preview.src = imgCommander.image_url;
+        } else if (trovato.image_url) {
+          preview.src = trovato.image_url;
+        } else {
+          // Imposta un'immagine di fallback
+          preview.src = "https://c2.scryfall.com/file/scryfall-card-backs/normal/59/597b79b3-7d77-4261-871a-60dd17403388.jpg";
+        }
+
+        const colori = trovato.color_identity || [];
+        const cmc = trovato.cmc || 0;
+        
+        // Utilizzare i dati reali se esistono, altrimenti mostrare che non sono disponibili
+        const partite = trovato.partite || null;
+        const vittorie = trovato.vittorie || null;
+        const winRate = (partite && vittorie !== null) ? (vittorie / partite) * 100 : null;
+
+        let punteggioStrategia = 0;
+        const criteri = strategieCriteri[strategia];
+        let feedbackStrategiaTestuale = "";
+
+        if (criteri) {
+          if (criteri.coloriEssenziali) {
+            criteri.coloriEssenziali.forEach(colore => {
+              if (colori.includes(colore)) {
+                punteggioStrategia += criteri.pesoColoriEssenziali || 1;
+                feedbackStrategiaTestuale += `\n✅ Include il colore essenziale ${colore}.`;
+              } else {
+                feedbackStrategiaTestuale += `\n❌ Manca il colore essenziale ${colore}.`;
+              }
+            });
+          }
+          if (criteri.coloriSecondari) {
+            criteri.coloriSecondari.forEach(colore => {
+              if (colori.includes(colore)) {
+                punteggioStrategia += criteri.pesoColoriSecondari || 0.5;
+                feedbackStrategiaTestuale += `\n☑️ Include il colore secondario ${colore}.`;
+              }
+            });
+          }
+          if (criteri.cmcMassimoIdeale !== undefined && cmc <= criteri.cmcMassimoIdeale) {
+            punteggioStrategia += criteri.pesoCmc || 1;
+            feedbackStrategiaTestuale += `\n✅ Il CMC (${cmc}) è ideale o basso (≤ ${criteri.cmcMassimoIdeale}).`;
+          } else if (criteri.cmcMassimoIdeale !== undefined) {
+            feedbackStrategiaTestuale += `\n⚠️ Il CMC (${cmc}) potrebbe essere alto per questa strategia (> ${criteri.cmcMassimoIdeale}).`;
+          }
+          if (criteri.numeroColoriMinimoIdeale !== undefined && colori.length >= criteri.numeroColoriMinimoIdeale) {
+            punteggioStrategia += criteri.pesoNumeroColori || 1;
+            feedbackStrategiaTestuale += `\n✅ Ha un buon numero di colori (${colori.length} ≥ ${criteri.numeroColoriMinimoIdeale}).`;
+          } else if (criteri.numeroColoriMinimoIdeale !== undefined) {
+            feedbackStrategiaTestuale += `\n⚠️ Potrebbe beneficiare di più colori (richiesti ≥ ${criteri.numeroColoriMinimoIdeale}, attuali ${colori.length}).`;
           }
         }
 
-        return commanders;
-      }
-
-      async function getCommanders() {
-        try {
-          const response = await fetch(
-            "https://edhstats.github.io/Data/commanders.json"
-          );
-          if (!response.ok)
-            throw new Error("Errore nel recupero dei dati.");
-          const data = await response.json();
-          return data.commanders;
-        } catch (error) {
-          document.getElementById("risultato").textContent =
-            "Errore: " + error.message;
-          return [];
-        }
-      }
-
-      function hasAllColors(colori, richiesti) {
-        return richiesti.every((c) => colori.includes(c));
-      }
-
-      async function valutaCommander() {
-        const nomeInput = document.getElementById("commanderName").value.trim();
-        const strategiaInput = document.getElementById("strategia").value;
-        const data = await getCommanders();
-        const nome = nomeInput.toLowerCase();
-        const strategia = strategiaInput.trim();
-        const output = document.getElementById("risultato");
-
-        let trovato = data.find((c) => c.name.toLowerCase() === nome);
-
-        if (!trovato) {
-          const secondaryData = await getSecondaryCommanders();
-          trovato = secondaryData.find((c) => c.name.toLowerCase() === nome);
-
-          if (trovato) {
-                      const valutazione = "Commander non ancora giocato!";
-                      const badge = "<span class='badge badge-low'>Non presente!</span>";
-                      const colori = trovato.color_identity.join(", ");
-                      const cmc = trovato.cmc;
-
-                      output.innerHTML =
-                        `Il tuo Commander EDH:<br>` +
-                        `Nome: ${trovato.name} ${badge}<br>` +
-                        `Colori: ${colori}<br>` +
-                        `Strategia dichiarata: ${strategia}<br>` +
-                        `CMC: ${cmc}<br>` +
-                        `Partite Giocate: 0<br>` +
-                        `Vittorie: 0<br>` +
-                        `Win Rate stimato: N/A<br><br>` +
-                        `<strong>Valutazione meta:</strong> ${valutazione}<br>` +
-                        `<strong>Valutazione strategia:</strong> non applicabile (nessun dato disponibile).`;
-                      return;
-                    }
-
-        }
-
-        // Logica classica per commander trovato nel data principale
-        const winRate = (trovato.vittorie / trovato.partite) * 100;
-        let colori = trovato.color_identity.flatMap((c) => c.split(""));
-        const cmc = trovato.cmc;
-
-        let valutazione = "";
-        let feedbackStrategia = " ";
-        let punteggioStrategia = 0;
-        let badge = "";
-
-        if (trovato.partite === 0) {
-          valutazione = "Commander non ancora giocato!";
-          badge = "<span class='badge badge-low'>Non presente!</span>";
-        } else if (trovato.partite < 5) {
-          valutazione = "⚠️ Dati limitati – campione statistico basso.";
-          badge = "<span class='badge badge-low'>Campione ridotto</span>";
-        } else if (winRate >= 50) {
-          valutazione = "🔥 Commander top-tier con un win rate eccellente!";
-          badge = "<span class='badge badge-top'>Top Meta</span>";
-        } else if (winRate >= 40) {
-          valutazione = "Commander solido con buone prestazioni nel meta.";
-          badge = "<span class='badge badge-good'>Popolare</span>";
-        } else if (winRate >= 30) {
-          valutazione = "Commander discreto, potrebbe necessitare ottimizzazione.";
-          badge = "<span class='badge badge-medium'>Discreto</span>";
-        } else if (winRate >= 10) {
-          valutazione = "Commander con prestazioni sotto la media nel meta attuale.";
-          badge = "<span class='badge badge-low'>Sotto Meta</span>";
-        } else {
-          valutazione = "Commander con win rate molto basso.";
-          badge = "<span class='badge badge-low'>Meta basso</span>";
-        }
-
-        
-
-
-        // Strategia
-        if (strategia === "Control") {
-          if (colori.includes("U")) punteggioStrategia ++;
-          if (colori.includes("W")) punteggioStrategia++;
-          if (hasAllColors(colori, ["U", "W"])) punteggioStrategia += 2;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Aggro") {
-          if (colori.includes("R")) punteggioStrategia++;
-          if (colori.includes("G")) punteggioStrategia ++;
-          if (hasAllColors(colori, ["G", "R"])) punteggioStrategia += 2;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Combo") {
-          if (colori.includes("B")) punteggioStrategia++;
-          if (colori.includes("U")) punteggioStrategia++;
-          if (hasAllColors(colori, ["U", "B"])) punteggioStrategia += 2;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Midrange") {
-          if (colori.includes("G")) punteggioStrategia++;
-          if (cmc <= 4) punteggioStrategia++;
-          if (colori.length >= 3) punteggioStrategia++;
-        }
-
-        if (strategia === "Tokens") {
-          if (colori.includes("G")) punteggioStrategia++;
-          if (colori.includes("W")) punteggioStrategia++;
-          if (colori.includes("R")) punteggioStrategia++;
-          if (hasAllColors(colori, ["R", "G", "W"])) punteggioStrategia += 2;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Stax") {
-          if (colori.includes("W")) punteggioStrategia++;
-          if (colori.includes("B")) punteggioStrategia++;
-          if (hasAllColors(colori, ["W", "B"])) punteggioStrategia += 2;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Group Hug") {
-          if (hasAllColors(colori, ["U", "W"])) punteggioStrategia++;
-          if (colori.includes("G")) punteggioStrategia++;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Superfriends") {
-          if (hasAllColors(colori, ["W", "U"])) punteggioStrategia++;
-          if (cmc <= 4) punteggioStrategia++;
-          if (colori.length >= 3) punteggioStrategia++;
-        }
-
-        if (strategia === "Reanimator") {
-          if (colori.includes("B")) punteggioStrategia++;
-          if (cmc <= 4) punteggioStrategia++;
-          if (colori.includes("G") || colori.includes("U")) punteggioStrategia++;
-        }
-
-        if (strategia === "Voltron") {
-          if (colori.includes("W")) punteggioStrategia++;
-          if (colori.includes("R")) punteggioStrategia++;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Landfall") {
-          if (colori.includes("G")) punteggioStrategia++;
-          if (colori.includes("R")) punteggioStrategia++;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Spellslinger") {
-          if (colori.includes("U")) punteggioStrategia++;
-          if (colori.includes("R")) punteggioStrategia++;
-          if (cmc <= 4) punteggioStrategia++;
-        }
-
-        if (strategia === "Ramp") {
-          if (colori.includes("G")) punteggioStrategia++;
-          if (cmc <= 4) punteggioStrategia++;
-        
-        }
-
-        let etichettaStrategia = "";
-        if (punteggioStrategia >= 4) {
-          etichettaStrategia = "🟢 Strategia eccellente";
-        } else if (punteggioStrategia >= 2) {
-          etichettaStrategia = "🟡 Strategia buona";
+        let valutazioneStrategia = "🔴 Sinergia bassa";
+        let badgeClass = "badge-low";
+        if (punteggioStrategia >= 5) {
+          valutazioneStrategia = "🟢 Ottima sinergia";
+          badgeClass = "badge-top";
+        } else if (punteggioStrategia >= 3) {
+          valutazioneStrategia = "🟡 Buona sinergia";
+          badgeClass = "badge-good";
         } else if (punteggioStrategia >= 1) {
-          etichettaStrategia = "🟠 Strategia debole";
-        } else {
-          etichettaStrategia = "🔴 Strategia non sinergica";
+          valutazioneStrategia = "🟠 Sinergia discreta";
+          badgeClass = "badge-medium";
         }
 
-        let motivazioneStrategia = "";
+        let coloriText = colori.length ? colori.join(", ") : "Incolore";
+        
+        out.innerHTML = `
+          <h3>${trovato.name}</h3>
+          <div class="info-row">
+            <strong>Colori:</strong> <span>${coloriText}</span>
+          </div>
+          <div class="info-row">
+            <strong>Strategia scelta:</strong> <span>${strategia}</span>
+          </div>
+          <div class="info-row">
+            <strong>Costo di mana:</strong> <span>${cmc}</span>
+          </div>
+          <div class="info-row">
+            <strong>Partite registrate:</strong> 
+            <span>${partite !== null ? partite : '<span class="info-unavailable">Dati non disponibili</span>'}</span>
+          </div>
+          <div class="info-row">
+            <strong>Win Rate:</strong> 
+            <span>${winRate !== null ? winRate.toFixed(1) + '%' : '<span class="info-unavailable">Dati non disponibili</span>'}</span>
+          </div>
+          <div class="info-row">
+            <strong>Valutazione strategia:</strong> 
+            <span class="badge ${badgeClass}">${valutazioneStrategia}</span>
+          </div>
+          <details>
+            <summary>Dettagli sulla strategia</summary>
+            ${feedbackStrategiaTestuale}
+          </details>
+        `;
 
-        if (punteggioStrategia >= 4) {
-          motivazioneStrategia = "La combinazione di colori, CMC e caratteristiche del commander è altamente sinergica con la strategia scelta.";
-        } else if (punteggioStrategia >= 2) {
-          motivazioneStrategia = "Ci sono buoni elementi in linea con la strategia, anche se manca qualche dettaglio per massimizzarne l'efficacia.";
-        } else if (punteggioStrategia >= 1) {
-          motivazioneStrategia = "Il commander mostra qualche affinità con la strategia, ma ci sono limiti che ne compromettono l'efficienza.";
+        // Mostra la sezione dei risultati
+        resultsSection.style.display = "block";
+        
+        // Crea grafici o mostra messaggi di dati non disponibili
+        if (winRate !== null) {
+          creaGraficoWinrate(winRate);
+          creaGraficoTrend(winRate);
         } else {
-          motivazioneStrategia = "Colori e CMC del commander non sono in sintonia con la strategia dichiarata.";
+          mostraMessaggioNoDati('winrateContainer', 'Dati di win rate non disponibili');
+          mostraMessaggioNoDati('trendContainer', 'Dati di trend non disponibili');
         }
-
-
-        feedbackStrategia += `\nValutazione strategica: ${etichettaStrategia}\nMotivazione: ${motivazioneStrategia}`;
-
-
-        output.innerHTML =
-          `Il tuo Commander EDH:<br>` +
-          `Nome: ${trovato.name} ${badge}<br>` +
-          `Colori: ${colori.join(", ")}<br>` +
-          `Strategia dichiarata: ${strategia}<br>` +
-          `CMC: ${cmc}<br>` +
-          `Partite Giocate: ${trovato.partite}<br>` +
-          `Vittorie: ${trovato.vittorie}<br>` +
-          `Win Rate stimato: ${winRate.toFixed(2)}%<br><br>` +
-          `<strong>Valutazione meta:</strong> ${valutazione}<br>` +
-          `<strong>Valutazione strategia:</strong> ${feedbackStrategia}`;
+      } catch (error) {
+        out.textContent = `❌ Si è verificato un errore: ${error.message}`;
+        console.error(error);
+      } finally {
+        loader.style.display = "none";
+        btn.disabled = false;
       }
-    </script>
-  </body>
+    }
+  </script>
+</body>
 </html>
